@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueCity: Real and Simulated Urban Data for Cross-Domain 3D Scene Understanding</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #fff;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .conference {
+            font-size: 1.2em;
+            color: #e74c3c;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .authors {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+        
+        .affiliations {
+            font-size: 0.95em;
+            color: #666;
+            margin-bottom: 25px;
+        }
+        
+        .links {
+            margin: 30px 0;
+        }
+        
+        .links a {
+            display: inline-block;
+            margin: 5px 10px;
+            padding: 10px 25px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .links a:hover {
+            background-color: #2980b9;
+        }
+        
+        .links a.disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .teaser {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .teaser img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .caption {
+            font-style: italic;
+            color: #666;
+            margin-top: 15px;
+            font-size: 0.95em;
+        }
+        
+        section {
+            margin: 50px 0;
+        }
+        
+        h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        h3 {
+            font-size: 1.3em;
+            margin: 25px 0 15px 0;
+            color: #34495e;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        .figure {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .figure img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.9em;
+        }
+        
+        table th {
+            background-color: #3498db;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        table td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        table tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .bibtex {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+        }
+        
+        ul {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9em;
+            border-top: 1px solid #ddd;
+        }
+        
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>TrueCity: Real and Simulated Urban Data for Cross-Domain 3D Scene Understanding</h1>
+            <p class="conference">International Conference on 3D Vision (3DCV) 2025</p>
+            <p class="authors">
+                Ti Nguyen, [Author 2], [Author 3], [Add all authors]
+            </p>
+            <p class="affiliations">
+                Technical University of Munich
+            </p>
+            <div class="links">
+                <a href="figures/paper.pdf">Paper</a>
+                <a href="https://openreview.net/forum?id=wfc55x2gK2">OpenReview</a>
+                <a href="https://github.com/tum-gis/TrueCity">Code</a>
+                <a href="#" class="disabled">Dataset (Coming Soon)</a>
+            </div>
+        </header>
+
+        <div class="teaser">
+            <img src="figures/teaser.jpg" alt="TrueCity Teaser">
+            <p class="caption">
+                TrueCity introduces real-world annotated point clouds, a semantic 3D city model, and 3D-model simulated point clouds of the same location, enabling coherent evaluation of the sim-to-real domain gap in 3D scene understanding.
+            </p>
+        </div>
+
+        <section id="abstract">
+            <h2>Abstract</h2>
+            <p>
+                We introduce TrueCity, the first urban semantic segmentation benchmark with cm-accurate annotated real-world point clouds, semantic 3D city models, and annotated simulated point clouds representing the same city. TrueCity proposes segmentation classes aligned with international 3D city modeling standards, enabling consistent evaluation of synthetic-to-real gap. Our extensive experiments on common baselines quantify domain shift and highlight strategies for exploiting synthetic data to enhance real-world 3D scene understanding.
+            </p>
+        </section>
+
+        <section id="dataset">
+            <h2>TrueCity Benchmark Dataset</h2>
+            <div class="figure">
+                <img src="figures/benchmark-overview.jpg" alt="Benchmark Overview">
+                <p class="caption">
+                    Real-world point cloud (2nd row), which was manually labeled according to the class list, used for manual modeling of semantic 3D models (3rd row), which in turn were used to simulate and auto-label synthetic point clouds (4th row).
+                </p>
+            </div>
+            
+            <h3>Key Features</h3>
+            <ul>
+                <li><strong>Real-world point clouds:</strong> 113 million points with densities up to 3,000 pts/m² and 1-3 cm accuracy</li>
+                <li><strong>Semantic 3D city models:</strong> CityGML 2.0 compliant models of Ingolstadt city</li>
+                <li><strong>Simulated point clouds:</strong> CARLA-based synthetic data representing the same city</li>
+                <li><strong>12 semantic classes:</strong> Harmonized with CityGML 2.0 and OpenDRIVE 1.4 standards</li>
+            </ul>
+        </section>
+
+        <section id="experiments">
+            <h2>Experiments</h2>
+            <div class="figure">
+                <img src="figures/data_split_v2.jpg" alt="Data Split">
+                <p class="caption">
+                    Top-down schematic of S--R mixtures along a continuous streetscape. Solid lines mark train/validation/test splits; dashed lines mark boundaries between contiguous synthetic and real segments for each mixture ratio.
+                </p>
+            </div>
+            
+            <h3>Evaluation Protocol</h3>
+            <p>
+                We evaluate on TrueCity under controlled synthetic-real (S--R) mixtures: <span class="highlight">100S--0R, 75S--25R, 50S--50R, 25S--75R, and 0S--100R</span>. We test on point-based (PointNet, PointNet++, RandLA-Net), kernel-based (KPConv), and transformer-based (Point Transformer v1/v3, Superpoint Transformer, OctFormer) methods.
+            </p>
+        </section>
+
+        <section id="results">
+            <h2>Results</h2>
+            <div class="figure">
+                <img src="figures/experiment_result_final.jpg" alt="Experimental Results">
+                <p class="caption">
+                    Qualitative impact of the synthetic–real (S--R) training mix on models from different methods (Point-based, Kernel-based and Transformer-based).
+                </p>
+            </div>
+            
+            <h3>Key Findings</h3>
+            <ul>
+                <li><strong>Point Transformer v3</strong> improves mIoU from 14.13% at 100S--0R to 25.30% at 50S--50R</li>
+                <li><strong>Point Transformer v1</strong> benefits primarily from real data, reaching 28.89% at 0S--100R</li>
+                <li><strong>PointNet++</strong> peaks at 25.38% with 25S--75R mixture</li>
+                <li>Balanced mixes (around 50S--50R or 25S--75R) work best for transformer-based models</li>
+                <li>Locality-driven models (RandLA-Net, Superpoint Transformer) rely heavily on real data</li>
+            </ul>
+        </section>
+
+        <section id="citation">
+            <h2>Citation</h2>
+            <p>If you use TrueCity in your research, please cite our work:</p>
+            <div class="bibtex">
+@inproceedings{truecity2025,
+  title={TrueCity: Real and Simulated Urban Data for Cross-Domain 3D Scene Understanding},
+  author={Nguyen, Ti and others},
+  booktitle={International Conference on 3D Vision (3DCV)},
+  year={2025},
+  url={https://openreview.net/forum?id=wfc55x2gK2}
+}
+            </div>
+        </section>
+
+        <section id="acknowledgments">
+            <h2>Acknowledgments</h2>
+            <p>
+                This work was developed by the TUM Chair of Geoinformatics. We thank all contributors and reviewers for their valuable feedback.
+            </p>
+        </section>
+
+        <footer>
+            <p>© 2025 TUM Chair of Geoinformatics</p>
+            <p>For questions or issues, please open an issue on the <a href="https://github.com/tum-gis/TrueCity">GitHub repository</a>.</p>
+        </footer>
+    </div>
+</body>
+</html>
+
