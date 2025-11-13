@@ -3,7 +3,8 @@
 **Accepted to 3DCV 2025**
 
 <p align="center">
-  | <a href="figures/paper.pdf"><strong>Paper</strong></a>                  |
+  | <a href="https://arxiv.org/pdf/2511.07007"><strong>PDF</strong></a> |
+  | <a href="https://doi.org/10.48550/arXiv.2511.07007"><strong>arXiv</strong></a> |
   | <a href="https://github.com/tum-gis/TrueCity"><strong>Code</strong></a> |
   <strong>Dataset (Coming Soon)</strong>
 </p>
