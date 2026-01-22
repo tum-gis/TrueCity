@@ -1,0 +1,33 @@
+name: truecity
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pip
+  - numpy>=1.21.0
+  - pandas>=1.4.0
+  - scipy>=1.8.0
+  - matplotlib>=3.5.0
+  - scikit-learn>=1.1.0
+  - pyyaml>=6.0
+  - seaborn>=0.11.0
+  - h5py>=3.7.0
+  - pip:
+    # PyTorch (install CUDA version if needed)
+    - torch>=1.12.0
+    - torchvision>=0.13.0
+    - torchaudio>=0.12.0
+    # PointNet/PointNet2++ dependencies
+    - tqdm>=4.64.0
+    # Superpoint Transformer dependencies
+    - pytorch-lightning>=2.0.0
+    - hydra-core>=1.3.0
+    - omegaconf>=2.3.0
+    - wandb>=0.15.0
+    # Optional but recommended
+    # - open3d>=0.15.0
+    # - torch-points3d  # For Superpoint Transformer preprocessing
+
+
