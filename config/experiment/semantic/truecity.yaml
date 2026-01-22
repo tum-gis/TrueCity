@@ -1,0 +1,59 @@
+# @package _global_
+
+# To execute this experiment run:
+# python scripts/train_superpoint.py experiment=semantic/truecity datamodule.data_dir=/path/to/data
+
+# This configuration allows training Superpoint Transformer on TrueCity/Ingolstadt dataset
+# with 12 classes (0-11, excluding class 13)
+# Configuration is based on Zaha experiment but adapted for TrueCity data
+
+defaults:
+  - override /datamodule: truecity.yaml
+  - override /model: semantic/spt-2.yaml
+  - override /trainer: gpu.yaml
+
+# All parameters below will be merged with parameters from default configurations set above
+# This allows you to overwrite only specified parameters
+
+datamodule:
+  dataloader:
+    batch_size: 1  # Start with small batch size, can be increased based on GPU memory
+
+callbacks:
+  gradient_accumulator:
+    scheduling:
+      0:
+        4  # accumulate gradient every 4 batches, to make up for reduced batch size
+
+trainer:
+  max_epochs: 100
+  check_val_every_n_epoch: 2
+
+model:
+  optimizer:
+    lr: 0.01
+    weight_decay: 1e-4
+
+  scheduler:
+    num_warmup: 20
+    T_max: ${eval:'${trainer.max_epochs} - ${model.scheduler.num_warmup}'}
+    eta_min: 1e-6
+    warmup_init_lr: 1e-6
+    warmup_strategy: 'cos'
+
+  # Model architecture parameters
+  _node_mlp_out: 64
+  _h_edge_mlp_out: 64
+  _down_dim: [128, 128, 128, 128]
+  _up_dim: [128, 128, 128]
+  net:
+    no_ffn: False
+    down_ffn_ratio: 1
+    down_num_heads: 32
+
+logger:
+  wandb:
+    project: "truecity_superpoint_transformer"
+    name: "SPT-TrueCity-12classes"
+
+

@@ -1,0 +1,130 @@
+# @package datamodule
+defaults:
+  - /datamodule/semantic/default.yaml
+
+_target_: src.data.superpoint_datamodule.TrueCityDataModule
+
+dataloader:
+  batch_size: 4
+  num_workers: 4
+  pin_memory: True
+  persistent_workers: True
+
+# Number of classes: 12 (0-11, excluding class 13)
+num_classes: 12
+trainval: False
+
+# Allowed classes: 0-11 (RoadSurface, GroundSurface, CityFurniture, Vehicle, 
+# Pedestrian, WallSurface, RoofSurface, Door, Window, BuildingInstallation, 
+# Sol.VegetationObj., Noise)
+allowed_classes: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0]
+
+# Point features used for the partition
+partition_hf:
+  - 'geof'
+  - 'linearity'
+  - 'scattering'
+  - 'elevation'
+
+# Point features used for training
+point_hf:
+  - 'geof'
+  - 'linearity'
+  - 'scattering'
+  - 'elevation'
+
+# Segment-wise features computed at preprocessing
+segment_base_hf: []
+segment_mean_hf: []
+segment_std_hf: []
+
+# Horizontal edge features used for training
+edge_hf:
+  - 'mean_off'
+  - 'std_off'
+  - 'mean_dist'
+  - 'angle_source'
+  - 'angle_target'
+  - 'centroid_dir'
+  - 'centroid_dist'
+  - 'normal_angle'
+  - 'log_length'
+  - 'log_surface'
+  - 'log_volume'
+  - 'log_size'
+
+# Vertical edge features used for training
+v_edge_hf: []
+
+# Preprocessing parameters
+# Based on Zaha dataset configuration, adapted for Ingolstadt/TrueCity
+voxel: 0.1
+knn: 25
+knn_r: 5
+knn_step: -1
+knn_min_search: 10
+ground_threshold: 5
+ground_scale: 20
+
+# CutPursuit partition parameters
+pcp_regularization: [0.1, 0.2, 0.3]
+pcp_spatial_weight: [1e-1, 1e-2, 1e-3]
+pcp_cutoff: [10, 30, 100]
+pcp_k_adjacency: 10
+pcp_w_adjacency: 1
+pcp_iterations: 15
+
+# Graph construction parameters
+graph_k_min: 1
+graph_k_max: 30
+graph_gap: [5, 30, 30]
+graph_se_ratio: 0.3
+graph_se_min: 20
+graph_cycles: 3
+graph_margin: 0.5
+graph_chunk: [1e5, 1e5, 5e4]  # reduce if CUDA memory errors
+
+# Batch construction parameterization
+sample_segment_ratio: 0.2
+sample_segment_by_size: True
+sample_segment_by_class: False
+sample_point_min: 32
+sample_point_max: 128
+sample_graph_r: 50  # set to r<=0 to skip SampleRadiusSubgraphs
+sample_graph_k: 4
+sample_graph_disjoint: True
+sample_edge_n_min: -1  # [5, 5, 15]
+sample_edge_n_max: -1  # [10, 15, 25]
+
+# Augmentations parameterization
+pos_jitter: 0.05
+tilt_n_rotate_phi: 0.1
+tilt_n_rotate_theta: 180
+anisotropic_scaling: 0.2
+node_feat_jitter: 0
+h_edge_feat_jitter: 0
+v_edge_feat_jitter: 0
+node_feat_drop: 0
+h_edge_feat_drop: 0.3
+v_edge_feat_drop: 0
+node_row_drop: 0
+h_edge_row_drop: 0
+v_edge_row_drop: 0
+drop_to_mean: False
+
+# Preprocessing transforms
+# Note: These transforms are typically handled by torch_points3d
+# If torch_points3d is not available, preprocessing may need to be done separately
+pre_transform: null
+
+# CPU-based transforms
+train_transform: null
+val_transform: null
+test_transform: null
+
+# GPU-based transforms (applied on device)
+on_device_train_transform: null
+on_device_val_transform: null
+on_device_test_transform: null
+
+

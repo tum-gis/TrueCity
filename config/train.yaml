@@ -1,0 +1,74 @@
+# @package _global_
+
+# Main training configuration for Superpoint Transformer
+# This is the default config file used by train_superpoint.py
+
+defaults:
+  - _self_
+  - datamodule: truecity.yaml
+  - experiment: null  # Can be overridden with experiment=semantic/truecity
+  - hydra:
+      job:
+        chdir: false
+
+# Task name, determines output directory path
+task_name: "train"
+
+# Metric based on which models will be selected
+optimized_metric: "val/miou"
+
+# Tags to help identify experiments
+tags: ["truecity", "superpoint_transformer"]
+
+# Set False to skip model training
+train: True
+
+# Evaluate on test set, using best model weights achieved during training
+test: True
+
+# Compile model for faster training with pytorch >=2.1.0
+compile: False
+
+# Simply provide checkpoint path to resume training
+ckpt_path: null
+
+# Seed for random number generators
+seed: null
+
+# Logger configuration (can be overridden)
+logger:
+  _target_: pytorch_lightning.loggers.CSVLogger
+  save_dir: "logs"
+
+# Trainer configuration (can be overridden)
+trainer:
+  _target_: pytorch_lightning.Trainer
+  max_epochs: 100
+  min_epochs: 1
+  accelerator: gpu
+  devices: 1
+  check_val_every_n_epoch: 1
+  deterministic: False
+
+# Callbacks configuration
+callbacks:
+  model_checkpoint:
+    _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    dirpath: "checkpoints"
+    filename: "epoch_{epoch:03d}"
+    monitor: ${optimized_metric}
+    mode: "max"
+    save_last: True
+  
+  early_stopping:
+    _target_: pytorch_lightning.callbacks.EarlyStopping
+    monitor: ${optimized_metric}
+    mode: "max"
+    patience: 10
+
+# Model configuration (will be overridden by experiment config or model config)
+model:
+  _target_: null  # Should be set by experiment config
+  num_classes: ${datamodule.num_classes}
+
+
