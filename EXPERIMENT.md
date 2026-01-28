@@ -7,9 +7,10 @@
 3. [Data Preparation](#data-preparation)
 4. [Training PointNet](#training-pointnet)
 5. [Training PointNet2++](#training-pointnet2)
-6. [Evaluation](#evaluation)
-7. [Advanced Configuration](#advanced-configuration)
-8. [Troubleshooting](#troubleshooting)
+6. [Training OctreeFormer](#training-octreeformer)
+7. [Evaluation](#evaluation)
+8. [Advanced Configuration](#advanced-configuration)
+9. [Troubleshooting](#troubleshooting)
 
 ## 🏗️ Project Architecture
 
@@ -35,6 +36,16 @@ TrueCity/
 │       ├── __init__.py
 │       ├── logging.py     # Logging setup
 │       └── fps.py         # FPS sampling functions
+├── models/                 # Additional model implementations
+│   ├── pointnet/          # PointNet standalone
+│   └── octreeformer/      # OctreeFormer model (separate environment)
+│       ├── train.py       # Training script
+│       ├── test.py        # Testing script
+│       ├── model.py       # Model wrapper
+│       ├── octformer.py   # Core OctFormer
+│       ├── octformerseg.py # Segmentation head
+│       ├── point_transformer/ # Point transformer utilities
+│       └── environment.yml # Conda environment
 ├── scripts/               # Executable scripts
 │   ├── train_pointnet.py
 │   └── train_pointnet2.py
@@ -42,8 +53,9 @@ TrueCity/
 ├── examples/              # Example usage
 ├── docs/                  # Additional documentation
 ├── config/                 # Configuration files
+├── results/               # Training results and checkpoints
 ├── README.md
-├── Experiment.md
+├── EXPERIMENT.md
 └── requirements.txt
 ```
 
@@ -86,6 +98,12 @@ TrueCity/
 - **Set Abstraction**: Hierarchical point sampling and grouping
 - **Feature Propagation**: Upsampling with interpolation
 - **Features**: Multi-scale feature learning
+
+#### OctreeFormer (`models/octreeformer/`)
+- **Backbone**: OctFormer with hierarchical transformer blocks on octree structure
+- **Head**: Segmentation head with FPN-style feature fusion
+- **Features**: Octree-based hierarchical processing with attention mechanisms
+- **Environment**: Separate conda environment (`octreeformer`)
 
 ### Module Dependencies
 
@@ -464,6 +482,167 @@ python scripts/train_pointnet2.py \
 - Creates experiment directories in `./log/pointnet2_sem_seg/`
 - Saves checkpoints every 5 epochs
 
+## 🚀 Training OctreeFormer
+
+### Overview
+
+OctreeFormer is an octree-based transformer architecture for 3D point cloud segmentation. It uses hierarchical octree structures to efficiently process large point clouds with attention mechanisms.
+
+**Key Features**:
+- Octree-based hierarchical processing
+- Transformer attention mechanisms
+- Efficient memory usage for large point clouds
+- Separate conda environment for isolation
+
+### Installation
+
+OctreeFormer uses a separate conda environment to avoid conflicts with other models:
+
+```bash
+cd /home/stud/nguyenti/storage/user/TrueCity/models/octreeformer
+
+# Create the environment (already done if migrated)
+conda env create -f environment.yml
+
+# Activate the environment
+conda activate octreeformer
+```
+
+**Dependencies**:
+- Python 3.8
+- PyTorch (>=1.12.0)
+- ocnn (Octree CNN library) - automatically installed
+- numpy, pandas, tqdm, scipy
+
+### Training Commands
+
+#### Basic Training
+
+```bash
+cd /home/stud/nguyenti/storage/user/TrueCity/models/octreeformer
+conda activate octreeformer
+
+python train.py \
+  --data_path /home/stud/nguyenti/storage/user/tum-di-lab/datav2_octree/data_0_octree \
+  --epochs 200 \
+  --batch_size 32 \
+  --lr 0.1 \
+  --weight_decay 0.0001 \
+  --save_root /home/stud/nguyenti/storage/user/TrueCity/results
+```
+
+#### Training with Logging
+
+To save training output to a log file:
+
+```bash
+python train.py \
+  --data_path /home/stud/nguyenti/storage/user/tum-di-lab/datav2_octree/data_0_octree \
+  --epochs 200 \
+  --batch_size 32 \
+  --lr 0.1 \
+  --weight_decay 0.0001 \
+  --save_root /home/stud/nguyenti/storage/user/TrueCity/results \
+  > /home/stud/nguyenti/storage/user/TrueCity/results/octformer_data_0_octree_20250813_172119/octreeformer_data_0_octree_run.log 2>&1
+```
+
+### Training Hyperparameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--data_path` | Required | Path to data directory (must have train/val/test subdirectories) |
+| `--epochs` | `100` | Number of training epochs |
+| `--batch_size` | `32` | Training batch size |
+| `--lr` | `0.1` | Learning rate |
+| `--weight_decay` | `0.0001` | Weight decay for optimizer |
+| `--save_root` | `/home/stud/nguyenti/storage/user/tum-di-lab/results` | Root directory for saving results |
+| `--run_name` | Auto-generated | Custom run directory name |
+| `--drop_path` | `None` | Stochastic depth drop path rate |
+| `--dropout` | `None` | Head dropout rate |
+| `--accum_steps` | `1` | Gradient accumulation steps |
+| `--max_points_per_item` | `None` | Optional downsampling cap per item |
+
+### Training Options
+
+Additional options available:
+
+| Parameter | Description |
+|-----------|-------------|
+| `--test_only` | Only run evaluation on test set |
+| `--checkpoint` | Path to checkpoint for evaluation |
+| `--run_dir` | Existing run directory to load checkpoint from |
+| `--no_dwconv` | Disable CUDA dwconv extension |
+| `--use_dwconv` | Enable CUDA dwconv extension explicitly |
+
+### Model Architecture
+
+OctreeFormer consists of:
+- **Backbone**: OctFormer with hierarchical transformer blocks
+- **Head**: Segmentation head with FPN-style feature fusion
+- **Input**: Point coordinates + features (PL: Position + Label)
+- **Output**: Per-point class predictions
+
+### Data Format
+
+OctreeFormer expects the same data format as other models:
+- `.npy` files with shape `[N, 4]`
+- Columns: `[x, y, z, label]`
+- Data organized in `train/`, `val/`, `test/` subdirectories
+
+### Results and Checkpoints
+
+Results are saved to:
+```
+/home/stud/nguyenti/storage/user/TrueCity/results/octformer_<data>_<timestamp>/
+├── model/
+│   ├── model_best.pth      # Best model checkpoint
+│   ├── model_last.pth      # Last epoch checkpoint
+│   ├── training_log.txt    # Training configuration
+│   └── test_log.txt        # Test results
+└── octreeformer_<data>_octree_run.log  # Full training log
+```
+
+### Testing/Evaluation
+
+```bash
+conda activate octreeformer
+
+python test.py \
+  --checkpoint /path/to/model_best.pth \
+  --data_path /home/stud/nguyenti/storage/user/tum-di-lab/datav2_octree/data_0_octree \
+  --batch_size 32
+```
+
+### OctreeFormer Specific Notes
+
+- **Separate Environment**: Uses its own conda environment (`octreeformer`) to avoid dependency conflicts
+- **Octree Processing**: Automatically builds octrees from point clouds
+- **Memory Efficient**: Handles large point clouds efficiently through hierarchical processing
+- **Python 3.8 Compatible**: Code has been updated for Python 3.8 compatibility
+- **Migration**: Successfully migrated from `tum-di-lab` repository with preserved logic
+
+### Troubleshooting OctreeFormer
+
+**Environment Issues**:
+```bash
+# If environment doesn't exist
+conda env create -f /home/stud/nguyenti/storage/user/TrueCity/models/octreeformer/environment.yml
+
+# If ocnn is missing
+conda activate octreeformer
+pip install ocnn
+```
+
+**Import Errors**:
+- Ensure you're in the `octreeformer` directory when running scripts
+- Check that `point_transformer` module is in the same directory
+- Verify `augmentations.py` is in the root of `octreeformer/`
+
+**Memory Issues**:
+- Use `--max_points_per_item` to cap points per sample
+- Reduce `--batch_size` if running out of memory
+- Use `--accum_steps` for gradient accumulation with smaller batches
+
 ## 📈 Evaluation
 
 ### Test Evaluation
@@ -631,6 +810,7 @@ if torch.cuda.device_count() > 1:
 Training logs are saved to:
 - **PointNet**: `./logs/pointnet_training_YYYY-MM-DD_HH-MM.txt`
 - **PointNet2++**: `./log/pointnet2_sem_seg/YYYY-MM-DD_dataset/logs/`
+- **OctreeFormer**: `./results/octformer_<data>_<timestamp>/octreeformer_<data>_octree_run.log`
 
 Logs include:
 - Training progress and metrics
@@ -688,8 +868,23 @@ python scripts/train_pointnet2.py \
     --num_epochs 100 \
     --learning_rate 0.00005
 
+# Train OctreeFormer (0S-100R example)
+cd /home/stud/nguyenti/storage/user/TrueCity/models/octreeformer
+conda activate octreeformer
+python train.py \
+  --data_path /home/stud/nguyenti/storage/user/tum-di-lab/datav2_octree/data_0_octree \
+  --epochs 200 \
+  --batch_size 32 \
+  --lr 0.1 \
+  --weight_decay 0.0001 \
+  --save_root /home/stud/nguyenti/storage/user/TrueCity/results
+
 # Evaluate model
 python scripts/train_pointnet.py --mode test --model_path model.pth --data_path /path/to/data
+
+# Evaluate OctreeFormer
+conda activate octreeformer
+python test.py --checkpoint /path/to/model_best.pth --data_path /path/to/data
 
 # List checkpoints
 python scripts/train_pointnet.py --mode checkpoints --model_path model.pth

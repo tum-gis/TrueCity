@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 import glob
 import torch
 import numpy as np
 from tqdm import tqdm
-from dataset import farthest_point_sample_torch
+
+# Add project root (TrueCity) to path for `shared.*`
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
+from shared.utils.fps import farthest_point_sample_torch
 
 def precompute_octree_fps(source_path='/home/stud/nguyenti/storage/user/EARLy/data/data_0_octree',
                          output_path='/home/stud/nguyenti/storage/user/EARLy/data/data_0_octree_fps',

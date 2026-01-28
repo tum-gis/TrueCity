@@ -327,7 +327,7 @@ def main():
         print(f"\n🚀 Usage after octree splitting:")
         print(f"python training.py --mode train --data_path {result_path} --n_points 2048")
         print(f"\n💡 Or precompute FPS (optional, since octree chunks are small):")
-        print(f"python -c \"from dataset import precompute_fps_dataset; precompute_fps_dataset(source_path='{result_path}', output_path='{result_path}_fps', n_points=2048, sample_multiplier=1.0)\"")
+        print(f"python -c \"import sys; import os; sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'shared')); from shared.data.dataset import precompute_fps_dataset; precompute_fps_dataset(source_path='{result_path}', output_path='{result_path}_fps', n_points=2048, sample_multiplier=1.0)\"")
 
 
 if __name__ == "__main__":
