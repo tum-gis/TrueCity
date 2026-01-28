@@ -18,27 +18,24 @@
 
 ```
 TrueCity/
-├── src/                    # Source code
-│   ├── models/            # Model definitions
-│   │   ├── __init__.py
-│   │   ├── pointnet.py    # PointNet model
-│   │   └── pointnet2.py   # PointNet2++ model
-│   ├── data/              # Data handling
-│   │   ├── __init__.py
-│   │   ├── dataset.py     # IngolstadtDataset class
-│   │   └── dataloader.py  # DataLoader creation and analysis
-│   ├── training/          # Training logic
-│   │   ├── __init__.py
-│   │   ├── pointnet_trainer.py    # PointNet training
-│   │   ├── pointnet2_trainer.py   # PointNet2++ training
-│   │   └── metrics.py     # Evaluation metrics
-│   └── utils/             # Utilities
-│       ├── __init__.py
-│       ├── logging.py     # Logging setup
-│       └── fps.py         # FPS sampling functions
-├── models/                 # Additional model implementations
-│   ├── pointnet/          # PointNet standalone
-│   └── octreeformer/      # OctreeFormer model (separate environment)
+├── models/                 # Model implementations (each model is self-contained)
+│   ├── pointnet/          # PointNet and PointNet2++ (standalone)
+│   │   ├── src/           # Model source code
+│   │   │   ├── models/     # Model definitions (pointnet.py, pointnet2.py)
+│   │   │   ├── training/  # Training logic (pointnet_trainer.py, pointnet2_trainer.py)
+│   │   │   └── metrics.py # Evaluation metrics
+│   │   └── scripts/       # Training scripts
+│   │       ├── train_pointnet.py
+│   │       └── train_pointnet2.py
+│   ├── point_transformer/ # Point Transformer v1 (standalone)
+│   │   ├── train.py       # Training script
+│   │   ├── test.py        # Testing script
+│   │   ├── model.py       # Model definition
+│   │   ├── config.py      # Configuration
+│   │   ├── data_utils.py  # Data loading utilities
+│   │   ├── libs/          # CUDA operations (pointops, pointops2, etc.)
+│   │   └── environment.yml # Conda environment
+│   └── octreeformer/      # OctreeFormer (standalone, separate environment)
 │       ├── train.py       # Training script
 │       ├── test.py        # Testing script
 │       ├── model.py       # Model wrapper
@@ -46,9 +43,15 @@ TrueCity/
 │       ├── octformerseg.py # Segmentation head
 │       ├── point_transformer/ # Point transformer utilities
 │       └── environment.yml # Conda environment
-├── scripts/               # Executable scripts
-│   ├── train_pointnet.py
-│   └── train_pointnet2.py
+├── shared/                 # Shared utilities (used by pointnet models)
+│   ├── data/              # Shared data utilities
+│   │   ├── dataloader.py  # DataLoader creation
+│   │   └── dataset.py     # Dataset class
+│   └── utils/             # Shared utilities
+│       ├── logging.py     # Logging setup
+│       └── fps.py         # FPS sampling functions
+├── scripts/               # Root-level scripts (experimental/legacy)
+│   └── train_superpoint.py # Superpoint Transformer (experimental, requires external dependencies)
 ├── tools/                 # Utility scripts
 ├── examples/              # Example usage
 ├── docs/                  # Additional documentation
@@ -63,41 +66,47 @@ TrueCity/
 
 #### Training Pipeline
 
-1. **Data Loading** (`src/data/dataloader.py`)
+1. **Data Loading** (`shared/data/dataloader.py` for PointNet, model-specific for others)
    - Load point cloud files from disk
    - Apply FPS sampling (if not precomputed)
    - Normalize coordinates
    - Filter invalid classes
    - Create PyTorch DataLoaders
 
-2. **Model Creation** (`src/models/`)
-   - Initialize PointNet or PointNet2++ architecture
+2. **Model Creation** (`models/*/src/models/` for PointNet, model-specific for others)
+   - Initialize model architecture
    - Setup loss function
    - Move to GPU if available
 
-3. **Training Loop** (`src/training/*_trainer.py`)
+3. **Training Loop** (`models/*/src/training/*_trainer.py` for PointNet, model-specific for others)
    - Forward pass through model
    - Compute loss
    - Backward pass and optimization
    - Validation evaluation
    - Checkpoint saving
 
-4. **Evaluation** (`src/training/metrics.py`)
+4. **Evaluation** (`models/*/src/training/metrics.py` for PointNet, model-specific for others)
    - Compute comprehensive metrics
    - Per-class IoU, accuracy, precision, recall, F1
    - Overall accuracy and mean IoU
 
 ### Model Architectures
 
-#### PointNet (`src/models/pointnet.py`)
+#### PointNet (`models/pointnet/src/models/pointnet.py`)
 - **Encoder**: STN3d → Conv layers → Max pooling
 - **Decoder**: Feature concatenation → Conv layers → Classification
 - **Features**: Feature transformation for rotation invariance
 
-#### PointNet2++ (`src/models/pointnet2.py`)
+#### PointNet2++ (`models/pointnet/src/models/pointnet2.py`)
 - **Set Abstraction**: Hierarchical point sampling and grouping
 - **Feature Propagation**: Upsampling with interpolation
 - **Features**: Multi-scale feature learning
+
+#### Point Transformer v1 (`models/point_transformer/`)
+- **Architecture**: Transformer-based point cloud segmentation
+- **Features**: Self-attention mechanisms, relative position encoding
+- **Environment**: Separate conda environment (`point_transformer`)
+- **CUDA Ops**: Custom CUDA operations for efficient computation
 
 #### OctreeFormer (`models/octreeformer/`)
 - **Backbone**: OctFormer with hierarchical transformer blocks on octree structure
@@ -107,33 +116,39 @@ TrueCity/
 
 ### Module Dependencies
 
+**PointNet/PointNet2++**:
 ```
-scripts/
+models/pointnet/scripts/
   └── train_*.py
-      ├── src/training/*_trainer.py
-      │   ├── src/models/*.py
-      │   ├── src/data/dataloader.py
-      │   ├── src/training/metrics.py
-      │   └── src/utils/logging.py
-      └── src/utils/logging.py
+      ├── models/pointnet/src/training/*_trainer.py
+      │   ├── models/pointnet/src/models/*.py
+      │   ├── shared/data/dataloader.py
+      │   ├── models/pointnet/src/training/metrics.py
+      │   └── shared/utils/logging.py
+      └── shared/utils/logging.py
 ```
+
+**Point Transformer & OctreeFormer**:
+- Standalone models with local imports only
+- No dependencies on root-level `src/` or `shared/` folders
 
 ### Key Design Decisions
 
-1. **Modular Structure**: Separated models, data, training, and utilities
-2. **Preserved Logic**: All original functionality maintained during refactoring
-3. **Unified Interfaces**: Consistent API across PointNet and PointNet2++
-4. **Extensible**: Easy to add new models or datasets
+1. **Self-Contained Models**: Each model is in its own directory with its own dependencies
+2. **Shared Utilities**: PointNet models use `shared/` folder for common utilities
+3. **Separate Environments**: Point Transformer and OctreeFormer use separate conda environments
+4. **Preserved Logic**: All original functionality maintained during migration
+5. **Extensible**: Easy to add new models as standalone directories
 
 ### Import Paths
 
-All imports use relative paths within the `src/` package:
-- `from ..models.pointnet import ...`
-- `from ..data.dataloader import ...`
-- `from .metrics import ...`
+**PointNet/PointNet2++**:
+- Scripts use: `from src.training.pointnet_trainer import ...` (relative to `models/pointnet/`)
+- Trainers use: `from shared.data.dataloader import ...` (from project root)
+- Models use: `from src.models.pointnet import ...` (relative to `models/pointnet/`)
 
-Scripts add the project root to `sys.path` for absolute imports:
-- `from src.training.pointnet_trainer import ...`
+**Point Transformer & OctreeFormer**:
+- All imports are local: `from config import ...`, `from model import ...`
 
 ## 🔧 Installation
 
@@ -174,9 +189,12 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 conda activate truecity
 
 # Run training scripts
+cd models/pointnet
 python scripts/train_pointnet.py --mode train --data_path /path/to/data
 python scripts/train_pointnet2.py --mode train --data_path /path/to/data
-python scripts/train_superpoint.py datamodule.data_dir=/path/to/data experiment=semantic/truecity
+
+# Note: Superpoint Transformer is experimental and may require additional setup
+# python ../scripts/train_superpoint.py datamodule.data_dir=/path/to/data experiment=semantic/truecity
 ```
 
 ### Option 2: Pip Installation
@@ -267,15 +285,8 @@ The training automatically uses a fixed 12-class mapping: `[0, 1, 2, 3, 4, 5, 6,
 For faster training, precompute FPS samples:
 
 ```python
-from src.data.preprocessing import precompute_fps_dataset
-
-precompute_fps_dataset(
-    source_path='/path/to/raw/data',
-    output_path='/path/to/precomputed/data',
-    n_points=2048,
-    sample_multiplier=1.0,
-    gpu_batch_size=8
-)
+# FPS preprocessing is handled automatically by the data loaders
+# For custom preprocessing, see shared/utils/fps.py
 ```
 
 Then use the precomputed data path for training.
@@ -288,7 +299,7 @@ These are the exact hyperparameters used to achieve the results in the paper tab
 
 #### 100S-0R (100% Synthetic, 0% Real)
 ```bash
-cd /home/stud/nguyenti/storage/user/TrueCity
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 
 python scripts/train_pointnet.py \
     --mode train \
@@ -302,6 +313,7 @@ python scripts/train_pointnet.py \
 
 #### 75S-25R (75% Synthetic, 25% Real)
 ```bash
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet.py \
     --mode train \
     --data_path /home/stud/nguyenti/storage/user/EARLy/datav2_final/datav2_75_octree_fps \
@@ -314,6 +326,7 @@ python scripts/train_pointnet.py \
 
 #### 50S-50R (50% Synthetic, 50% Real)
 ```bash
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet.py \
     --mode train \
     --data_path /home/stud/nguyenti/storage/user/EARLy/datav2_final/datav2_50_octree_fps \
@@ -326,6 +339,7 @@ python scripts/train_pointnet.py \
 
 #### 25S-75R (25% Synthetic, 75% Real)
 ```bash
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet.py \
     --mode train \
     --data_path /home/stud/nguyenti/storage/user/EARLy/datav2_final/datav2_25_octree_fps \
@@ -338,6 +352,7 @@ python scripts/train_pointnet.py \
 
 #### 0S-100R (0% Synthetic, 100% Real)
 ```bash
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet.py \
     --mode train \
     --data_path /home/stud/nguyenti/storage/user/EARLy/datav2_final/datav2_0_octree_fps \
@@ -363,6 +378,7 @@ python scripts/train_pointnet.py \
 If a checkpoint exists, training will automatically resume:
 
 ```bash
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet.py \
     --mode train \
     --data_path /path/to/data \
@@ -392,7 +408,7 @@ These are the exact hyperparameters used to achieve the results in the paper tab
 
 #### 100S-0R (100% Synthetic, 0% Real)
 ```bash
-cd /home/stud/nguyenti/storage/user/TrueCity
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 
 python scripts/train_pointnet2.py \
     --mode train \
@@ -406,6 +422,7 @@ python scripts/train_pointnet2.py \
 
 #### 75S-25R (75% Synthetic, 25% Real)
 ```bash
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet2.py \
     --mode train \
     --data_path /home/stud/nguyenti/storage/user/EARLy/datav2_final/datav2_75_octree_fps \
@@ -418,6 +435,7 @@ python scripts/train_pointnet2.py \
 
 #### 50S-50R (50% Synthetic, 50% Real)
 ```bash
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet2.py \
     --mode train \
     --data_path /home/stud/nguyenti/storage/user/EARLy/datav2_final/datav2_50_octree_fps \
@@ -430,6 +448,7 @@ python scripts/train_pointnet2.py \
 
 #### 25S-75R (25% Synthetic, 75% Real)
 ```bash
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet2.py \
     --mode train \
     --data_path /home/stud/nguyenti/storage/user/EARLy/datav2_final/datav2_25_octree_fps \
@@ -442,6 +461,7 @@ python scripts/train_pointnet2.py \
 
 #### 0S-100R (0% Synthetic, 100% Real)
 ```bash
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet2.py \
     --mode train \
     --data_path /home/stud/nguyenti/storage/user/EARLy/datav2_final/datav2_0_octree_fps \
@@ -481,6 +501,345 @@ python scripts/train_pointnet2.py \
 - Learning rate is typically lower (0.0001 vs 0.001)
 - Creates experiment directories in `./log/pointnet2_sem_seg/`
 - Saves checkpoints every 5 epochs
+
+## 🚀 Training Point Transformer v1
+
+### Overview
+
+Point Transformer v1 is a transformer-based architecture for 3D point cloud segmentation. It uses self-attention mechanisms with relative position encoding to process point clouds efficiently.
+
+**Key Features**:
+- Transformer-based architecture with self-attention
+- Relative position encoding
+- Custom CUDA operations for efficient computation
+- Separate conda environment for isolation
+
+### Installation
+
+Point Transformer v1 uses a separate conda environment:
+
+```bash
+cd /home/stud/nguyenti/storage/user/TrueCity/models/point_transformer
+
+# Create the environment
+conda env create -f environment.yml
+
+# Activate the environment
+conda activate point_transformer
+
+# Build CUDA operations
+bash build_cuda_ops.sh
+```
+
+**Dependencies**:
+- Python 3.8
+- PyTorch (>=1.12.0)
+- Custom CUDA ops: pointops, pointops2, pointgroup_ops, pointseg
+- numpy, pandas, tqdm, scipy, scikit-learn
+
+### Training Commands
+
+#### Basic Training
+
+```bash
+cd /home/stud/nguyenti/storage/user/TrueCity/models/point_transformer
+conda activate point_transformer
+
+python train.py \
+  --base_data_root /home/stud/nguyenti/storage/user/tum-di-lab/datav2_octree \
+  --real_ratio 0 \
+  --batch_size 8 \
+  --accum_steps 4
+```
+
+#### Training for All Data Regimes
+
+```bash
+# 100S-0R (100% Synthetic, 0% Real)
+python train.py --base_data_root /path/to/datav2_octree --real_ratio 100 --batch_size 8 --accum_steps 4
+
+# 75S-25R
+python train.py --base_data_root /path/to/datav2_octree --real_ratio 75 --batch_size 8 --accum_steps 4
+
+# 50S-50R
+python train.py --base_data_root /path/to/datav2_octree --real_ratio 50 --batch_size 8 --accum_steps 4
+
+# 25S-75R
+python train.py --base_data_root /path/to/datav2_octree --real_ratio 25 --batch_size 8 --accum_steps 4
+
+# 0S-100R (0% Synthetic, 100% Real)
+python train.py --base_data_root /path/to/datav2_octree --real_ratio 0 --batch_size 8 --accum_steps 4
+```
+
+### Training Hyperparameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--base_data_root` | Required | Base path to data directory (e.g., `datav2_octree`) |
+| `--real_ratio` | `75` | Real data ratio (0, 25, 50, 75, 100) |
+| `--batch_size` | `8` | Training batch size (reduced for memory efficiency) |
+| `--accum_steps` | `1` | Gradient accumulation steps (use 4 to simulate batch_size=32) |
+| `--epochs` | `100` | Number of training epochs |
+| `--base_lr` | `0.1` | Base learning rate |
+| `--weight_decay` | `0.0001` | Weight decay for optimizer |
+
+### Training Options
+
+Additional options available:
+
+| Parameter | Description |
+|-----------|-------------|
+| `--fast_debug` | Enable fast debug mode (2 batches, 2 epochs) |
+| `--npoints_batch` | Number of points per batch item (default: 2048) |
+
+### Model Architecture
+
+Point Transformer v1 consists of:
+- **Encoder**: Transformer blocks with self-attention
+- **Decoder**: Feature propagation with interpolation
+- **Input**: Point coordinates + features
+- **Output**: Per-point class predictions
+
+### Data Format
+
+Point Transformer v1 expects:
+- `.npy` files with shape `[N, 4]`
+- Columns: `[x, y, z, label]`
+- Data organized in `train/`, `val/`, `test/` subdirectories
+- Supports both `datav2_octree/data_{ratio}_octree/` and `datav2_final/train/datav2_{ratio}_octree_fps/` structures
+
+### Results and Checkpoints
+
+Results are saved to:
+```
+experiments/point_transformer_v1_logs/model_{ratio}/
+├── model/
+│   ├── model_best.pth      # Best model checkpoint
+│   ├── model_last.pth      # Last epoch checkpoint
+│   ├── training_log.txt    # Training log
+│   └── test_log.txt        # Test results
+```
+
+### Testing/Evaluation
+
+```bash
+conda activate point_transformer
+
+python test.py \
+  --checkpoint /path/to/model_best.pth \
+  --base_data_root /path/to/datav2_octree \
+  --real_ratio 0
+```
+
+### Point Transformer v1 Specific Notes
+
+- **Separate Environment**: Uses its own conda environment (`point_transformer`)
+- **Memory Intensive**: Architecture is memory-intensive; use smaller batch sizes with gradient accumulation
+- **CUDA Operations**: Requires custom CUDA ops to be built (see `build_cuda_ops.sh`)
+- **Gradient Accumulation**: Use `--accum_steps 4` with `--batch_size 8` to simulate `batch_size=32`
+- **Python 3.8 Compatible**: Code has been updated for Python 3.8 compatibility
+
+### Troubleshooting Point Transformer v1
+
+**CUDA Ops Build Issues**:
+```bash
+# Load CUDA module if available
+module load cuda/12.1
+
+# Or set CUDA_HOME
+export CUDA_HOME=/usr/local/cuda
+
+# Rebuild CUDA ops
+cd /home/stud/nguyenti/storage/user/TrueCity/models/point_transformer
+bash build_cuda_ops.sh
+```
+
+**Memory Issues**:
+- Reduce `--batch_size` (default is 8)
+- Use `--accum_steps` for gradient accumulation
+- Clear CUDA cache: `torch.cuda.empty_cache()` is called automatically
+
+**Data Path Issues**:
+- The config automatically detects different data directory structures
+- Ensure `base_data_root` points to the correct base directory
+
+## 🚀 Training Point Transformer v3
+
+### Overview
+
+Point Transformer v3 (PTv3) is a transformer-based architecture for 3D point cloud segmentation using serialized attention mechanisms and sparse convolutions. It uses efficient serialization (z-order, hilbert curves) and sparse 3D convolutions for memory-efficient processing.
+
+**Key Features**:
+- Serialized attention with multiple orderings (z-order, hilbert)
+- Sparse convolution (spconv) for efficient 3D processing
+- Encoder-decoder architecture with multi-scale features
+- Separate conda environment for isolation
+
+### Installation
+
+Point Transformer v3 uses a separate conda environment:
+
+```bash
+cd /home/stud/nguyenti/storage/user/TrueCity/models/point_transformer_v3
+
+# Create the environment
+conda env create -f environment.yml
+
+# Activate the environment
+conda activate point_transformer_v3
+
+# Install spconv (may require CUDA setup)
+pip install spconv-cu118  # For CUDA 11.8
+# Or build from source if needed
+```
+
+**Dependencies**:
+- Python 3.8
+- PyTorch >= 2.0.0
+- spconv (sparse convolution) - requires CUDA
+- torch-scatter
+- timm (for DropPath)
+- addict (for Dict)
+- numpy, pandas, scipy, tqdm, scikit-learn
+
+### Training Commands
+
+#### Basic Training
+
+```bash
+cd /home/stud/nguyenti/storage/user/TrueCity/models/point_transformer_v3
+conda activate point_transformer_v3
+
+python train.py \
+  --base_data_root /home/stud/nguyenti/storage/user/tum-di-lab/datav2_octree \
+  --real_ratio 0 \
+  --batch_size 16 \
+  --epochs 100
+```
+
+#### Training for All Data Regimes
+
+```bash
+# 100S-0R (100% Synthetic, 0% Real)
+python train.py --base_data_root /path/to/datav2_octree --real_ratio 100 --batch_size 16
+
+# 75S-25R
+python train.py --base_data_root /path/to/datav2_octree --real_ratio 75 --batch_size 16
+
+# 50S-50R
+python train.py --base_data_root /path/to/datav2_octree --real_ratio 50 --batch_size 16
+
+# 25S-75R
+python train.py --base_data_root /path/to/datav2_octree --real_ratio 25 --batch_size 16
+
+# 0S-100R (0% Synthetic, 100% Real)
+python train.py --base_data_root /path/to/datav2_octree --real_ratio 0 --batch_size 16
+```
+
+### Training Hyperparameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--base_data_root` | Auto-detected | Base path to data directory |
+| `--real_ratio` | `100` | Real data ratio (0, 25, 50, 75, 100) |
+| `--batch_size` | `32` | Training batch size |
+| `--epochs` | `100` | Number of training epochs |
+| `--base_lr` | `0.001` | Base learning rate |
+| `--weight_decay` | `0.01` | Weight decay for optimizer |
+| `--drop_path` | `0.1` | Drop path rate for regularization |
+| `--voxel_size` | `0.02` | Voxel size for collate function (meters) |
+| `--enable_flash` | `False` | Enable flash attention (requires flash_attn) |
+
+### Training Options
+
+Additional options available:
+
+| Parameter | Description |
+|-----------|-------------|
+| `--head_dropout` | Dropout rate for classification head (default: 0.1) |
+| `--label_smoothing` | Label smoothing factor (default: 0.0) |
+| `--workers` | Number of data loading workers (default: 4) |
+
+### Model Architecture
+
+Point Transformer v3 consists of:
+- **Embedding**: Initial feature embedding layer
+- **Encoder**: Multi-stage encoder with serialized attention blocks
+- **Decoder**: Multi-stage decoder with feature propagation
+- **Head**: Classification head for segmentation
+
+Key features:
+- Serialized attention with multiple orderings (z-order, hilbert curves)
+- Sparse convolution for efficient 3D processing
+- Drop path regularization
+- Optional flash attention support
+
+### Data Format
+
+Point Transformer v3 expects:
+- `.npy` files with shape `[N, 4]`
+- Columns: `[x, y, z, label]`
+- Data organized in `train/`, `val/`, `test/` subdirectories
+- Supports both `datav2_octree/data_{ratio}_octree/` and `datav2_final/train/datav2_{ratio}_octree_fps/` structures
+
+### Results and Checkpoints
+
+Results are saved to:
+```
+/home/stud/nguyenti/storage/user/TrueCity/results/ptv3_{dataset_name}_{timestamp}/
+├── model/
+│   ├── model_best.pth      # Best model checkpoint
+│   ├── model_last.pth      # Last epoch checkpoint
+│   └── training_log.txt    # Training log
+```
+
+### Testing/Evaluation
+
+```bash
+conda activate point_transformer_v3
+
+python test.py \
+  --checkpoint /path/to/model_best.pth \
+  --base_data_root /path/to/datav2_octree \
+  --real_ratio 0
+```
+
+### Point Transformer v3 Specific Notes
+
+- **Separate Environment**: Uses its own conda environment (`point_transformer_v3`) to avoid dependency conflicts
+- **spconv Requirement**: Requires spconv (sparse convolution) which needs CUDA setup
+- **Serialized Attention**: Uses efficient serialization mechanisms for memory-efficient attention
+- **Memory Efficient**: Handles large point clouds efficiently through sparse convolutions
+- **Python 3.8 Compatible**: Code has been updated for Python 3.8 compatibility
+- **Label Merging**: Class 12 is automatically merged into class 11 during training
+
+### Troubleshooting Point Transformer v3
+
+**spconv Installation Issues**:
+```bash
+# Ensure CUDA is available
+nvcc --version
+
+# Set CUDA_HOME if needed
+export CUDA_HOME=/usr/local/cuda
+
+# Try installing spconv
+conda activate point_transformer_v3
+pip install spconv-cu118
+
+# If that fails, try building from source
+pip install spconv-cu118 --no-build-isolation
+```
+
+**Memory Issues**:
+- Reduce `--batch_size` (default is 32, try 16 or 8)
+- Reduce `--voxel_size` to process fewer points
+- Use gradient accumulation if needed
+
+**Import Errors**:
+- Ensure you're in the `point_transformer_v3` directory when running scripts
+- Verify all dependencies: `pip list | grep -E "spconv|torch-scatter|timm|addict"`
+- Check that `serialization/` module is in the same directory
 
 ## 🚀 Training OctreeFormer
 
@@ -649,6 +1008,7 @@ pip install ocnn
 
 ```bash
 # PointNet
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet.py \
     --mode test \
     --model_path pointnet_model.pth \
@@ -657,6 +1017,7 @@ python scripts/train_pointnet.py \
     --batch_size 32
 
 # PointNet2++
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet2.py \
     --mode test \
     --model_path pointnet2_model.pth \
@@ -679,6 +1040,7 @@ The evaluation outputs:
 Analyze your dataset before training:
 
 ```bash
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet.py \
     --mode analyze \
     --data_path /path/to/data \
@@ -839,6 +1201,7 @@ EARLY_DATA="/home/stud/nguyenti/storage/user/EARLy/datav2_final"
 ls -la $EARLY_DATA/datav2_*_octree_fps
 
 # Verify data structure for a specific split
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet.py \
     --mode analyze \
     --data_path $EARLY_DATA/datav2_0_octree_fps
@@ -848,9 +1211,11 @@ python scripts/train_pointnet.py \
 
 ```bash
 # Analyze dataset
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet.py --mode analyze --data_path /path/to/data
 
 # Train PointNet (0S-100R example)
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet.py \
     --mode train \
     --data_path /home/stud/nguyenti/storage/user/EARLy/datav2_final/datav2_0_octree_fps \
@@ -860,6 +1225,7 @@ python scripts/train_pointnet.py \
     --learning_rate 0.001
 
 # Train PointNet2++ (0S-100R example)
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet2.py \
     --mode train \
     --data_path /home/stud/nguyenti/storage/user/EARLy/datav2_final/datav2_0_octree_fps \
@@ -867,6 +1233,24 @@ python scripts/train_pointnet2.py \
     --batch_size 32 \
     --num_epochs 100 \
     --learning_rate 0.00005
+
+# Train Point Transformer v1 (0S-100R example)
+cd /home/stud/nguyenti/storage/user/TrueCity/models/point_transformer
+conda activate point_transformer
+python train.py \
+  --base_data_root /home/stud/nguyenti/storage/user/tum-di-lab/datav2_octree \
+  --real_ratio 0 \
+  --batch_size 8 \
+  --accum_steps 4
+
+# Train Point Transformer v3 (0S-100R example)
+cd /home/stud/nguyenti/storage/user/TrueCity/models/point_transformer_v3
+conda activate point_transformer_v3
+python train.py \
+  --base_data_root /home/stud/nguyenti/storage/user/tum-di-lab/datav2_octree \
+  --real_ratio 0 \
+  --batch_size 16 \
+  --epochs 100
 
 # Train OctreeFormer (0S-100R example)
 cd /home/stud/nguyenti/storage/user/TrueCity/models/octreeformer
@@ -879,14 +1263,27 @@ python train.py \
   --weight_decay 0.0001 \
   --save_root /home/stud/nguyenti/storage/user/TrueCity/results
 
-# Evaluate model
+# Evaluate PointNet
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet.py --mode test --model_path model.pth --data_path /path/to/data
 
+# Evaluate Point Transformer v1
+cd /home/stud/nguyenti/storage/user/TrueCity/models/point_transformer
+conda activate point_transformer
+python test.py --checkpoint /path/to/model_best.pth --base_data_root /path/to/data --real_ratio 0
+
+# Evaluate Point Transformer v3
+cd /home/stud/nguyenti/storage/user/TrueCity/models/point_transformer_v3
+conda activate point_transformer_v3
+python test.py --checkpoint /path/to/model_best.pth --base_data_root /path/to/data --real_ratio 0
+
 # Evaluate OctreeFormer
+cd /home/stud/nguyenti/storage/user/TrueCity/models/octreeformer
 conda activate octreeformer
 python test.py --checkpoint /path/to/model_best.pth --data_path /path/to/data
 
 # List checkpoints
+cd /home/stud/nguyenti/storage/user/TrueCity/models/pointnet
 python scripts/train_pointnet.py --mode checkpoints --model_path model.pth
 ```
 

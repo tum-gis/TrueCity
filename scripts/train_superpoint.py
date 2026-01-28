@@ -2,6 +2,11 @@
 """
 Training script for Superpoint Transformer on TrueCity/Ingolstadt dataset
 Uses Hydra for configuration management and PyTorch Lightning for training
+
+NOTE: This script is EXPERIMENTAL and requires the root src/ folder which has been removed.
+To use Superpoint Transformer, you need to restore src/data/superpoint_datamodule.py or
+install superpoint_transformer as a package. This script may not work in the current
+cleaned repository structure.
 """
 
 import os

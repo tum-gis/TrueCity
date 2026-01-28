@@ -1,0 +1,12 @@
+===== Training Configuration =====
+Device: cuda:0
+Epochs: 100
+Batch size: 1
+npoints_batch: 2048
+Learning rate: 0.1
+Momentum: 0.9
+Weight decay: 0.0001
+Seed: 7777
+Classes: ['RoadSurface', 'GroundSurface', 'RoadInstallations', 'Vehicle', 'Pedestrian', 'WallSurface', 'RoofSurface', 'Door', 'Window', 'BuildingInstallation', 'Tree', 'Noise']
+==================================
+

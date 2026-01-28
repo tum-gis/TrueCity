@@ -1,0 +1,21 @@
+name: point_transformer_v3
+channels:
+  - conda-forge
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.8
+  - numpy>=1.21.0
+  - pandas>=1.4.0
+  - scipy>=1.8.0
+  - tqdm>=4.60.0
+  - pip
+  - pip:
+      - torch>=2.0.0
+      - torchvision>=0.15.0
+      - scikit-learn>=1.1.0
+      - spconv-cu118>=2.3.0  # Sparse convolution (CUDA 11.8)
+      - torch-scatter>=2.1.0  # Scatter operations
+      - timm>=0.9.0  # For DropPath
+      - addict>=2.4.0  # For Dict
+

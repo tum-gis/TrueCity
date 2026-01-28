@@ -10,13 +10,14 @@ import argparse
 import glob
 import torch
 
-# Add project root to path
-project_root = os.path.join(os.path.dirname(__file__), '..')
-sys.path.insert(0, project_root)
+# Add shared and local src to path
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(0, os.path.join(project_root, 'shared'))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.training.pointnet_trainer import train_ingolstadt_segmentation, evaluate_model
-from src.data.dataloader import analyze_ingolstadt_dataset
-from src.utils.logging import setup_logger, get_log_string_function
+from shared.data.dataloader import analyze_ingolstadt_dataset
+from shared.utils.logging import setup_logger, log_string
 
 
 def run_test_evaluation(model_path, data_path, n_points=2048, batch_size=32, log_func=None):
@@ -35,27 +36,26 @@ def run_test_evaluation(model_path, data_path, n_points=2048, batch_size=32, log
     """
     if log_func is None:
         logger = setup_logger(name="PointNet")
-        log_func = get_log_string_function(logger)
+        log_func = lambda msg: log_string(logger, msg)
     
     if not os.path.exists(model_path):
-        log_string(f"❌ Model file not found: {model_path}")
+        log_func(f"❌ Model file not found: {model_path}")
         return 0.0
         
-    log_string("="*50)
-    log_string("🧪 COMPREHENSIVE TEST EVALUATION")
-    log_string("="*50)
+    log_func("="*50)
+    log_func("🧪 COMPREHENSIVE TEST EVALUATION")
+    log_func("="*50)
     
     accuracy = evaluate_model(
         model_path=model_path,
         data_path=data_path,
         n_points=n_points,
-        batch_size=batch_size,
-        log_func=log_func
+        batch_size=batch_size
     )
     
-    log_string("="*50)
-    log_string(f"🏆 FINAL RESULT: {accuracy:.2f}% Test Accuracy")
-    log_string("="*50)
+    log_func("="*50)
+    log_func(f"🏆 FINAL RESULT: {accuracy:.2f}% Test Accuracy")
+    log_func("="*50)
     
     return accuracy
 
@@ -70,10 +70,10 @@ def list_checkpoints(model_prefix="pointnet", log_func=None):
     """
     if log_func is None:
         logger = setup_logger(name="PointNet")
-        log_func = get_log_string_function(logger)
+        log_func = lambda msg: log_string(logger, msg)
     
-    log_string("🔍 Available checkpoints for resuming:")
-    log_string("="*50)
+    log_func("🔍 Available checkpoints for resuming:")
+    log_func("="*50)
     
     # Find checkpoint files
     checkpoint_patterns = [
@@ -87,8 +87,8 @@ def list_checkpoints(model_prefix="pointnet", log_func=None):
         checkpoints.extend(glob.glob(pattern))
     
     if not checkpoints:
-        log_string("❌ No checkpoint files found")
-        log_string("💡 Train a model first to create checkpoints")
+        log_func("❌ No checkpoint files found")
+        log_func("💡 Train a model first to create checkpoints")
         return
     
     # Sort by modification time (newest first)
@@ -102,14 +102,14 @@ def list_checkpoints(model_prefix="pointnet", log_func=None):
             val_acc = state.get('val_accuracy', 0.0)
             best_val_acc = state.get('best_val_accuracy', 0.0)
             
-            log_string(f"{i:2d}. {checkpoint}")
-            log_string(f"    📊 Epoch: {epoch}, Val Acc: {val_acc:.2f}%, Best: {best_val_acc:.2f}%")
+            log_func(f"{i:2d}. {checkpoint}")
+            log_func(f"    📊 Epoch: {epoch}, Val Acc: {val_acc:.2f}%, Best: {best_val_acc:.2f}%")
             
         except Exception as e:
-            log_string(f"{i:2d}. {checkpoint} (⚠️ Cannot read checkpoint info)")
+            log_func(f"{i:2d}. {checkpoint} (⚠️ Cannot read checkpoint info)")
     
-    log_string("="*50)
-    log_string("💡 Use --model_path <checkpoint_path> to automatically resume training")
+    log_func("="*50)
+    log_func("💡 Use --model_path <checkpoint_path> to automatically resume training")
 
 
 def main():
@@ -141,15 +141,15 @@ def main():
     
     # Setup logging
     logger = setup_logger(name="PointNet")
-    log_string = get_log_string_function(logger)
+    log_func = lambda msg: log_string(logger, msg)
     
     if args.mode == 'analyze':
-        log_string("📊 Analyzing dataset...")
-        stats = analyze_ingolstadt_dataset(data_path=args.data_path, log_func=log_string, max_files=args.max_files)
+        log_func("📊 Analyzing dataset...")
+        stats = analyze_ingolstadt_dataset(data_path=args.data_path, max_files=args.max_files)
         
 
     elif args.mode == 'train':
-        log_string("🚀 Starting semantic segmentation training...")
+        log_func("🚀 Starting semantic segmentation training...")
         result = train_ingolstadt_segmentation(
             data_path=args.data_path,
             n_points=args.n_points,
@@ -158,40 +158,38 @@ def main():
             learning_rate=args.learning_rate,
             save_path=args.model_path,
             sample_multiplier=args.sample_multiplier,
-            ignore_labels=args.ignore_labels,
-            log_func=log_string
+            ignore_labels=args.ignore_labels
         )
         
     elif args.mode == 'eval':
-        log_string("🔍 Evaluating model...")
+        log_func("🔍 Evaluating model...")
         if not os.path.exists(args.model_path):
-            log_string(f"Model file not found: {args.model_path}")
+            log_func(f"Model file not found: {args.model_path}")
             return
         
         accuracy = evaluate_model(
             model_path=args.model_path,
             data_path=args.data_path,
             n_points=args.n_points,
-            batch_size=args.batch_size,
-            log_func=log_string
+            batch_size=args.batch_size
         )
         
     elif args.mode == 'test':
-        log_string("🧪 Running comprehensive test evaluation...")
+        log_func("🧪 Running comprehensive test evaluation...")
         accuracy = run_test_evaluation(
             model_path=args.model_path,
             data_path=args.data_path,
             n_points=args.n_points,
             batch_size=args.batch_size,
-            log_func=log_string
+            log_func=log_func
         )
         
     elif args.mode == 'checkpoints':
         # Extract model name from model_path for searching
         model_name = os.path.splitext(os.path.basename(args.model_path))[0]
-        list_checkpoints(model_prefix=model_name, log_func=log_string)
+        list_checkpoints(model_prefix=model_name, log_func=log_func)
     
-    log_string("Done!")
+    log_func("Done!")
 
 
 if __name__ == "__main__":

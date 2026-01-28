@@ -8,12 +8,13 @@ import os
 import sys
 import argparse
 
-# Add project root to path
-project_root = os.path.join(os.path.dirname(__file__), '..')
-sys.path.insert(0, project_root)
+# Add shared and local src to path
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(0, os.path.join(project_root, 'shared'))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.training.pointnet2_trainer import train_pointnet2_segmentation, evaluate_model
-from src.utils.logging import setup_logger, get_log_string_function
+from shared.utils.logging import setup_logger, get_log_string_function
 
 
 def run_test_evaluation(model_path, data_path, n_points=2048, batch_size=32, ignore_labels=None, log_func=None):
@@ -36,12 +37,12 @@ def run_test_evaluation(model_path, data_path, n_points=2048, batch_size=32, ign
         log_func = get_log_string_function(logger)
     
     if not os.path.exists(model_path):
-        log_string(f"❌ Model file not found: {model_path}")
+        log_func(f"❌ Model file not found: {model_path}")
         return 0.0
         
-    log_string("="*50)
-    log_string("🧪 COMPREHENSIVE PointNet2++ TEST EVALUATION")
-    log_string("="*50)
+    log_func("="*50)
+    log_func("🧪 COMPREHENSIVE PointNet2++ TEST EVALUATION")
+    log_func("="*50)
     
     accuracy = evaluate_model(
         model_path=model_path,
@@ -52,9 +53,9 @@ def run_test_evaluation(model_path, data_path, n_points=2048, batch_size=32, ign
         log_func=log_func
     )
     
-    log_string("="*50)
-    log_string(f"🏆 FINAL RESULT: {accuracy:.2f}% Test Accuracy")
-    log_string("="*50)
+    log_func("="*50)
+    log_func(f"🏆 FINAL RESULT: {accuracy:.2f}% Test Accuracy")
+    log_func("="*50)
     
     return accuracy
 
@@ -86,10 +87,10 @@ def main():
     
     # Setup logging
     logger = setup_logger(name="PointNet2++")
-    log_string = get_log_string_function(logger)
+    log_func = get_log_string_function(logger)
     
     if args.mode == 'train':
-        log_string("🚀 Starting PointNet2++ semantic segmentation training...")
+        log_func("🚀 Starting PointNet2++ semantic segmentation training...")
         result = train_pointnet2_segmentation(
             data_path=args.data_path,
             n_points=args.n_points,
@@ -99,13 +100,13 @@ def main():
             save_path=args.model_path,
             sample_multiplier=args.sample_multiplier,
             ignore_labels=args.ignore_labels,
-            log_func=log_string
+            log_func=log_func
         )
         
     elif args.mode == 'eval':
-        log_string("🔍 Evaluating PointNet2++ model...")
+        log_func("🔍 Evaluating PointNet2++ model...")
         if not os.path.exists(args.model_path):
-            log_string(f"Model file not found: {args.model_path}")
+            log_func(f"Model file not found: {args.model_path}")
             return
         
         accuracy = evaluate_model(
@@ -114,21 +115,21 @@ def main():
             n_points=args.n_points,
             batch_size=args.batch_size,
             ignore_labels=args.ignore_labels,
-            log_func=log_string
+            log_func=log_func
         )
         
     elif args.mode == 'test':
-        log_string("🧪 Running comprehensive PointNet2++ test evaluation...")
+        log_func("🧪 Running comprehensive PointNet2++ test evaluation...")
         accuracy = run_test_evaluation(
             model_path=args.model_path,
             data_path=args.data_path,
             n_points=args.n_points,
             batch_size=args.batch_size,
             ignore_labels=args.ignore_labels,
-            log_func=log_string
+            log_func=log_func
         )
     
-    log_string("Done!")
+    log_func("Done!")
 
 
 if __name__ == "__main__":

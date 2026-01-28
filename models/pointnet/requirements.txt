@@ -1,0 +1,22 @@
+# PointNet & PointNet2++ Dependencies
+# Core PyTorch (install with CUDA support if needed)
+torch>=1.12.0
+torchvision>=0.13.0
+torchaudio>=0.12.0
+
+# Data processing
+numpy>=1.21.0
+pandas>=1.4.0
+
+# Progress bars
+tqdm>=4.60.0
+
+# Machine learning utilities
+scikit-learn>=1.1.0
+
+# Visualization
+matplotlib>=3.5.0
+
+# Note: For CUDA support, install PyTorch from https://pytorch.org/get-started/locally/
+
+
