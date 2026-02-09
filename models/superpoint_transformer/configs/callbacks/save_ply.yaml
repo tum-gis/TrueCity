@@ -1,0 +1,5 @@
+# configs/callbacks/save_ply.yaml
+save_ply:
+  _target_: src.callbacks.save_ply.SaveTestPLY
+  out_dir: ${paths.output_dir}/ply_out
+  filename: test_pred.ply

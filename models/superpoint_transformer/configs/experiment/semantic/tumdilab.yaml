@@ -1,0 +1,32 @@
+# @package _global_
+
+defaults:
+  - override /datamodule: semantic/tumdilab.yaml
+  - override /model: semantic/spt-2.yaml
+  - override /trainer: gpu.yaml
+
+trainer:
+  max_epochs: 100
+  check_val_every_n_epoch: 2
+
+model:
+  optimizer:
+    lr: 0.01
+    weight_decay: 1e-4
+  
+  scheduler:
+    num_warmup: 2
+  
+  _node_mlp_out: 64
+  _h_edge_mlp_out: 64
+  _down_dim: [ 128, 128, 128, 128 ]
+  _up_dim: [ 128, 128, 128 ]
+  net:
+    no_ffn: False
+    down_ffn_ratio: 1
+    down_num_heads: 32
+
+logger:
+  wandb:
+    project: "spt_tumdilab"
+    name: "SPT-tumdilab"
