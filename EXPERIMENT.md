@@ -253,6 +253,71 @@ Results are saved to `TrueCity/results/kp_conv_<dataset>_<timestamp>_log/`
 
 ---
 
+## Superpoint Transformer (SPT)
+
+### Location
+`models/superpoint_transformer/`
+
+### Setup
+1. Create conda environment:
+   ```bash
+   cd models/superpoint_transformer
+   ./install.sh
+   conda activate spt
+   ```
+
+   **Optional**: For sparse convolution support (advanced models):
+   ```bash
+   ./install.sh with_torchsparse
+   ```
+
+2. **Prepare data** in the following structure:
+   ```
+   models/superpoint_transformer/data/tumdilab/raw/
+   ├── train/
+   │   └── datav2_100_octree_fps/    # or other real_ratio values
+   │       ├── block_000001.npy
+   │       └── ...
+   ├── val/
+   │   ├── val_000001.npy
+   │   └── ...
+   └── test/
+       ├── test_000001.npy
+       └── ...
+   ```
+
+3. Training command:
+   ```bash
+   cd models/superpoint_transformer
+   python src/train.py experiment=semantic/tumdilab
+   ```
+
+### Configuration
+Key parameters in `configs/datamodule/semantic/tumdilab.yaml`:
+- **Data**: `real_ratio: 100` (affects training dir name: `datav2_{real_ratio}_octree_fps`)
+- **Preprocessing**: `voxel: 0.05`, `pcp_regularization: [0.1, 0.2, 0.3]`
+- **Training**: `batch_size: 4`, `sample_graph_r: 50`, `sample_graph_k: 4`
+- **Augmentation**: `pos_jitter: 0.05`, `tilt_n_rotate_theta: 180`
+
+### Evaluation
+```bash
+python src/eval.py experiment=semantic/tumdilab ckpt_path=/path/to/checkpoint.ckpt
+```
+
+### Results
+Training outputs saved to `logs/train/runs/YYYY-MM-DD_HH-MM-SS/`:
+- Checkpoints: `checkpoints/last.ckpt` and best model (selected by validation mIoU)
+- Training logs: `train.log`
+- WandB: Synced to project `spt_tumdilab`
+
+### Notes
+- Based on [superpoint_transformer](https://github.com/drprojects/superpoint_transformer) (ICCV 2023)
+- Uses hierarchical superpoint partitioning for efficient 3D semantic segmentation
+- Preprocessing computes superpoint structure at multiple scales
+- Best model selected automatically based on validation mIoU
+
+---
+
 ## Notes
 - **Data Preprocessing is Required**: All models expect preprocessed data in the format described above (train/val/test splits with .npy files containing [x, y, z, label])
 - Preprocessing must be done before training - use the tools in `TrueCity/tools/` or model-specific preprocessing scripts

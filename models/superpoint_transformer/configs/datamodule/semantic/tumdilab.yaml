@@ -1,0 +1,438 @@
+# @package datamodule
+defaults:
+  - /datamodule/semantic/default.yaml
+
+_target_: src.datamodules.tumdilab.TumdilabDataModule
+
+# ========================================================================
+#                        Dataset-specific Parameters
+# ========================================================================
+
+# Pure semantic segmentation (no instance/panoptic path)
+# instance: false
+
+# Number of classes (exclude the internal 'ignored' which is handled as num_classes index)
+num_classes: 12
+
+# Safest for pure semantic segmentation: empty stuff list
+# stuff_classes: []
+
+# Training data selection parameters
+real_ratio: 100
+train_subdir_tpl: "datav2_${datamodule.real_ratio}_octree_fps"
+# fallback_to_plain_train: true
+
+# Whether to use train+val for training
+trainval: false
+
+# Tiling parameters (null = no tiling)
+xy_tiling: null
+pc_tiling: null
+
+# ========================================================================
+#                          DataLoader Settings
+# ========================================================================
+
+dataloader:
+  batch_size: 4
+  # num_workers: 4
+  # pin_memory: true
+  # persistent_workers: true
+
+# ========================================================================
+#                         Feature Configurations
+# ========================================================================
+
+# Point features used for partition (Cut-Pursuit)
+partition_hf:
+  - linearity
+  - planarity
+  - scattering
+  - verticality
+  - elevation
+
+# Point features used for training
+point_hf:
+  - linearity
+  - planarity
+  - scattering
+  - verticality
+  - elevation
+
+# Segment-wise features computed at preprocessing
+segment_base_hf: []
+
+# Segment features computed as mean of point features (normal is derived, not RGB)
+segment_mean_hf: []
+
+# Segment features computed as std of point features
+segment_std_hf: []
+
+# Horizontal edge features for training
+edge_hf:
+  - mean_off
+  - std_off
+  - mean_dist
+  - angle_source
+  - angle_target
+  - centroid_dir
+  - centroid_dist
+  - normal_angle
+  - log_length
+  - log_surface
+  - log_volume
+  - log_size
+
+# Vertical edge features
+v_edge_hf: []
+
+# ========================================================================
+#                      Preprocessing Parameters
+# ========================================================================
+
+voxel: 0.05
+
+# KNN graph construction
+knn: 25
+knn_r: 10
+knn_step: -1
+knn_min_search: 10
+
+# Ground detection parameters
+ground_threshold: 5
+ground_scale: 20
+
+# Cut-Pursuit Partition parameters
+pcp_regularization: [0.1, 0.2, 0.3]
+pcp_spatial_weight: [1e-1, 1e-2, 1e-3]
+pcp_cutoff: [10, 30, 100]
+pcp_k_adjacency: 10
+pcp_w_adjacency: 1
+pcp_iterations: 15
+
+# Superpoint graph construction
+graph_k_min: 1
+graph_k_max: 30
+graph_gap: [5, 30, 30]
+graph_se_ratio: 0.3
+graph_se_min: 20
+graph_cycles: 3
+graph_margin: 0.5
+graph_chunk: [1e6, 1e5, 1e5]  # reduce if CUDA memory errors
+
+# ========================================================================
+#                        Sampling Parameters
+# ========================================================================
+
+# Segment sampling
+sample_segment_ratio: 0.2
+sample_segment_by_size: true
+sample_segment_by_class: false
+
+# Point sampling within segments
+sample_point_min: 32
+sample_point_max: 128
+
+# Graph sampling
+sample_graph_r: 50 # set to r<=0 to skip SampleRadiusSubgraphs
+sample_graph_k: 4
+sample_graph_disjoint: true
+
+# Edge sampling
+sample_edge_n_min: -1
+sample_edge_n_max: -1
+
+
+# ========================================================================
+#                      Augmentation Parameters
+# ========================================================================
+
+# Geometric augmentations
+pos_jitter: 0.05
+tilt_n_rotate_phi: 0.1
+tilt_n_rotate_theta: 180
+anisotropic_scaling: 0.2
+
+# No RGB in your data -> disable color augments
+rgb_jitter: 0.0
+rgb_autocontrast: 0.0
+rgb_drop: 0.0
+
+# Feature augmentations
+node_feat_jitter: 0.0
+h_edge_feat_jitter: 0.0
+v_edge_feat_jitter: 0.0
+node_feat_drop: 0.0
+h_edge_feat_drop: 0.3
+v_edge_feat_drop: 0.0
+
+# Row-wise dropout
+node_row_drop: 0.0
+h_edge_row_drop: 0.0
+v_edge_row_drop: 0.0
+drop_to_mean: false
+
+
+# ========================================================================
+#                          Transform Pipelines
+# ========================================================================
+
+# ---------- Preprocessing transforms (applied once and cached) ----------
+pre_transform:
+  - transform: SaveNodeIndex
+    params:
+      key: sub
+
+  - transform: DataTo
+    params:
+      device: cuda   # 若无 GPU 改为 cpu
+
+  - transform: GridSampling3D
+    params:
+      size: ${datamodule.voxel}
+      hist_key: y
+      hist_size: ${eval:'${datamodule.num_classes} + 1'}
+
+  - transform: KNN
+    params:
+      k: ${datamodule.knn}
+      r_max: ${datamodule.knn_r}
+      verbose: false
+
+  - transform: DataTo
+    params:
+      device: cpu
+
+  - transform: PointFeatures
+    params:
+      keys: ${datamodule.point_hf_preprocess}
+      k_min: 1
+      k_step: ${datamodule.knn_step}
+      k_min_search: ${datamodule.knn_min_search}
+      overwrite: false
+
+  - transform: GroundElevation
+    params:
+      z_threshold: ${datamodule.ground_threshold}
+      scale: ${datamodule.ground_scale}
+
+  - transform: DataTo
+    params:
+      device: cuda
+
+  - transform: AdjacencyGraph
+    params:
+      k: ${datamodule.pcp_k_adjacency}
+      w: ${datamodule.pcp_w_adjacency}
+
+  - transform: ConnectIsolated
+    params:
+      k: 1
+
+  - transform: DataTo
+    params:
+      device: cpu
+
+  - transform: AddKeysTo
+    params:
+      keys: ${datamodule.partition_hf}
+      to: x
+      delete_after: false
+
+  - transform: CutPursuitPartition
+    params:
+      regularization: ${datamodule.pcp_regularization}
+      spatial_weight: ${datamodule.pcp_spatial_weight}
+      k_adjacency: ${datamodule.pcp_k_adjacency}
+      cutoff: ${datamodule.pcp_cutoff}
+      iterations: ${datamodule.pcp_iterations}
+      parallel: true
+      verbose: false
+
+  - transform: NAGRemoveKeys
+    params:
+      level: all
+      keys: x
+
+  - transform: NAGTo
+    params:
+      device: cuda
+
+  - transform: SegmentFeatures
+    params:
+      n_min: 32
+      n_max: 128
+      keys: ${datamodule.segment_base_hf_preprocess}
+      mean_keys: ${datamodule.segment_mean_hf_preprocess}
+      std_keys: ${datamodule.segment_std_hf_preprocess}
+      strict: false
+
+  - transform: RadiusHorizontalGraph
+    params:
+      k_min: ${datamodule.graph_k_min}
+      k_max: ${datamodule.graph_k_max}
+      gap: ${datamodule.graph_gap}
+      se_ratio: ${datamodule.graph_se_ratio}
+      se_min: ${datamodule.graph_se_min}
+      cycles: ${datamodule.graph_cycles}
+      margin: ${datamodule.graph_margin}
+      chunk_size: ${datamodule.graph_chunk}
+      halfspace_filter: true
+      bbox_filter: true
+      target_pc_flip: true
+      source_pc_sort: false
+      keys:
+        - mean_off
+        - std_off
+        - mean_dist
+
+  - transform: NAGTo
+    params:
+      device: cpu
+
+# CPU-based transforms
+train_transform: null
+val_transform: ${datamodule.train_transform}
+test_transform: ${datamodule.val_transform}
+
+# ---------- GPU-based train transforms ----------
+on_device_train_transform:
+  - transform: NodeSize
+
+  - transform: SampleSubNodes
+    params:
+      low: 0
+      high: 1
+      n_min: ${datamodule.sample_point_min}
+      n_max: ${datamodule.sample_point_max}
+
+  - transform: SampleRadiusSubgraphs
+    params:
+      r: ${datamodule.sample_graph_r}
+      k: ${datamodule.sample_graph_k}
+      i_level: 1
+      by_size: false
+      by_class: false
+      disjoint: ${datamodule.sample_graph_disjoint}
+
+  - transform: SampleSegments
+    params:
+      ratio: ${datamodule.sample_segment_ratio}
+      by_size: ${datamodule.sample_segment_by_size}
+      by_class: ${datamodule.sample_segment_by_class}
+
+  - transform: NAGRestrictSize
+    params:
+      level: 1+
+      num_nodes: ${datamodule.max_num_nodes}
+
+  - transform: NAGCast
+
+  - transform: NAGJitterKey
+    params:
+      key: pos
+      sigma: ${datamodule.pos_jitter}
+      trunc: ${datamodule.voxel}
+
+  - transform: RandomTiltAndRotate
+    params:
+      phi: ${datamodule.tilt_n_rotate_phi}
+      theta: ${datamodule.tilt_n_rotate_theta}
+
+  - transform: RandomAnisotropicScale
+    params:
+      delta: ${datamodule.anisotropic_scaling}
+
+  - transform: RandomAxisFlip
+    params:
+      p: 0.5
+
+  - transform: OnTheFlyHorizontalEdgeFeatures
+    params:
+      keys: ${datamodule.edge_hf}
+      use_mean_normal: ${eval:'"normal" in ${datamodule.segment_mean_hf}'}
+
+  - transform: OnTheFlyVerticalEdgeFeatures
+    params:
+      keys: ${datamodule.v_edge_hf}
+      use_mean_normal: ${eval:'"normal" in ${datamodule.segment_mean_hf}'}
+
+  - transform: SampleEdges
+    params:
+      level: 1+
+      n_min: ${datamodule.sample_edge_n_min}
+      n_max: ${datamodule.sample_edge_n_max}
+
+  - transform: NAGRestrictSize
+    params:
+      level: 1+
+      num_edges: ${datamodule.max_num_edges}
+
+  - transform: NAGAddKeysTo
+    params:
+      level: 0
+      keys: ${eval:'ListConfig([k for k in ${datamodule.point_hf} if k != "rgb"])'}
+      to: x
+
+  - transform: NAGAddKeysTo
+    params:
+      level: 1+
+      keys: ${eval:'ListConfig([k for k in ${datamodule.segment_hf} if k != "rgb"])'}
+      to: x
+
+  - transform: NAGJitterKey
+    params:
+      key: x
+      sigma: ${datamodule.node_feat_jitter}
+      trunc: ${eval:'2 * ${datamodule.node_feat_jitter}'}
+
+  - transform: NAGJitterKey
+    params:
+      key: edge_attr
+      sigma: ${datamodule.h_edge_feat_jitter}
+      trunc: ${eval:'2 * ${datamodule.h_edge_feat_jitter}'}
+
+  - transform: NAGJitterKey
+    params:
+      key: v_edge_attr
+      sigma: ${datamodule.v_edge_feat_jitter}
+      trunc: ${eval:'2 * ${datamodule.v_edge_feat_jitter}'}
+
+# ---------- GPU-based val/test transforms ----------
+on_device_val_transform:
+  - transform: NodeSize
+
+  - transform: NAGCast
+
+  - transform: OnTheFlyHorizontalEdgeFeatures
+    params:
+      keys: ${datamodule.edge_hf}
+      use_mean_normal: ${eval:'"normal" in ${datamodule.segment_mean_hf}'}
+
+  - transform: OnTheFlyVerticalEdgeFeatures
+    params:
+      keys: ${datamodule.v_edge_hf}
+      use_mean_normal: ${eval:'"normal" in ${datamodule.segment_mean_hf}'}
+
+  - transform: NAGAddKeysTo
+    params:
+      level: 0
+      keys: ${eval:'ListConfig([k for k in ${datamodule.point_hf} if k != "rgb"])'}
+      to: x
+
+  - transform: NAGAddKeysTo
+    params:
+      level: 1+
+      keys: ${eval:'ListConfig([k for k in ${datamodule.segment_hf} if k != "rgb"])'}
+      to: x
+
+  - transform: NAGAddSelfLoops
+
+  - transform: OnTheFlyInstanceGraph
+    params:
+      level: ${eval:'1 if ${datamodule.instance} else -1'}
+      num_classes: ${datamodule.num_classes}
+      k_max: ${datamodule.instance_k_max}
+      radius: ${datamodule.instance_radius}
+
+on_device_test_transform: ${datamodule.on_device_val_transform}

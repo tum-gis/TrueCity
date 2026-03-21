@@ -83,3 +83,7 @@ output/
 outputs/
 results/
 checkpoints/
+
+# Superpoint Transformer - ignore compiled dependencies
+models/superpoint_transformer/src/dependencies/*
+!models/superpoint_transformer/src/dependencies/__init__.py
