@@ -3,10 +3,10 @@
 **Accepted to 3DCV 2025**
 
 <p align="center">
-  | <a href="https://arxiv.org/pdf/2511.07007"><strong>PDF</strong></a> |
-  | <a href="https://doi.org/10.48550/arXiv.2511.07007"><strong>arXiv</strong></a> |
-  | <a href="https://github.com/tum-gis/TrueCity"><strong>Code</strong></a> |
-  <strong>Dataset (Coming Soon)</strong>
+  <a href="https://arxiv.org/pdf/2511.07007"><strong>PDF</strong></a> |
+  <a href="https://doi.org/10.48550/arXiv.2511.07007"><strong>arXiv</strong></a> |
+  <a href="https://github.com/tum-gis/TrueCity"><strong>Code</strong></a> |
+  <a href="https://syncandshare.lrz.de/getlink/fi2dMmkUN98Htbe5A4v2z1/Published"><strong>Dataset</strong></a>
 </p>
 
 <p align="center">
@@ -67,7 +67,7 @@ TrueCity proposes a class list of **12 classes** harmonized with the standards *
 
 - **Paper**: [PDF](https://arxiv.org/pdf/2511.07007), [arXiv](https://doi.org/10.48550/arXiv.2511.07007)
 - **Code**: [https://github.com/tum-gis/TrueCity](https://github.com/tum-gis/TrueCity)
-- **Dataset**: Coming Soon
+- **Dataset**: [LRZ Sync+Share](https://syncandshare.lrz.de/getlink/fi2dMmkUN98Htbe5A4v2z1/Published)
 
 ## Citation
 
