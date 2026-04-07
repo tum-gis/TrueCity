@@ -75,16 +75,18 @@ If you use TrueCity in your research, please cite our work:
 
 ```bibtex
 @inproceedings{truecity2025,
-  title={TrueCity: Real and Simulated Urban Data for Cross-Domain 3D Scene Understanding},
-  author={Duc Nguyen and Yan-Ling Lai and Qilin Zhang and Prabin Gyawali and Benedikt Schwab and Olaf Wysocki and Thomas H. Kolbe},
-  booktitle={International Conference on 3D Vision (3DCV)},
-  year={2025},
-  url={https://arxiv.org/abs/2511.07007}
+	author = {Nguyen, Doc and Lai, Yan-Ling and Zhang, Qilin and Gyawali, Prabin and Schwab, Benedikt and Wysocki, Olaf and Kolbe, Thomas H.},
+	title = {TrueCity: Real and Simulated Urban Data for Cross-Domain 3D Scene Understanding},
+	booktitle = {International Conference on 3D Vision 2026 (3DV 2026)},
+	year = {2026},
+  publisher = {IEEE Xplore},
+  language = {en},
+  abstract = {3D semantic scene understanding remains a long-standing challenge in the 3D computer vision community. One of the key issues pertains to limited real-world annotated data to facilitate generalizable models. The common practice to tackle this issue is to simulate new data. Although synthetic datasets offer scalability and perfect labels, their designer-crafted scenes fail to capture real-world complexity and sensor noise, resulting in a synthetic-to-real domain gap. Moreover, no benchmark provides synchronized real and simulated point clouds for segmentation-oriented domain shift analysis. We introduce TrueCity, the first urban semantic segmentation benchmark with cm-accurate annotated real-world point clouds, semantic 3D city models, and annotated simulated point clouds representing the same city. TrueCity proposes segmentation classes aligned with international 3D city modeling standards, enabling consistent evaluation of synthetic-to-real gap. Our extensive experiments on common baselines quantify domain shift and highlight strategies for exploiting synthetic data to enhance real-world 3D scene understanding. We are convinced that the TrueCity dataset will foster further development of sim-to-real gap quantification and enable generalizable data-driven models. The data and code are available online: https://tum-gis.github.io/TrueCity/},
+  keywords = {GISPro_CityGML; GISTop_CityModeling; GISTop_SpatialModelingAndAlgorithms; LOCTop_Data_generation_and_object_reconstruction; LOCTop_Spatial_modeling_and_algorithms; LOCTop_Urban_Information_Modeling_Virtual_3D_City_Model; LOCenter},
+  url = {https://openreview.net/pdf?id=wfc55x2gK2}
 }
 ```
 
 ## Contact
 
 For questions or issues, please open an issue on the [GitHub repository](https://github.com/tum-gis/TrueCity).
-
----
