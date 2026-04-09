@@ -1,6 +1,6 @@
 # TrueCity: Real and Simulated Urban Data for Cross-Domain 3D Scene Understanding
 
-**Accepted to 3DCV 2025**
+**Accepted to 3DV 2026**
 
 <p align="center">
   <a href="https://arxiv.org/pdf/2511.07007"><strong>PDF</strong></a> |
