@@ -45,6 +45,8 @@ TrueCity proposes a class list of **12 classes** harmonized with the standards *
   <em>Top-down schematic of S--R mixtures along a continuous streetscape. Solid lines mark train/validation/test splits; dashed lines mark boundaries between contiguous synthetic and real segments for each mixture ratio.</em>
 </p>
 
+To create these mixes from the released data, see [Creating Real-Synthetic Mixes](EXPERIMENT.md#creating-real-synthetic-mixes).
+
 
 ## Results
 
