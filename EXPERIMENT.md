@@ -6,9 +6,59 @@ This document tracks experiments and model configurations for the TrueCity proje
 
 **IMPORTANT**: Before training any model, you must preprocess your data to match the format used in EARLy or tum-di-lab.
 
+### Creating Real-Synthetic Mixes
+
+`tools/create_mix.py` builds the synthetic–real (S–R) training mixes from the released point clouds. Each training split is cut into 4 segments of equal area along the street, and mix `k` uses real data for the first `k` segments and synthetic data for the rest.
+
+**Run:**
+
+```bash
+python tools/create_mix.py --data_dir /path/to/data -l
+```
+
+**Parameters:**
+- `--data_dir`: Folder containing the released `.npy` files (default: `./data`)
+- `-l`, `--label_rs`: Add a 5th column marking each point's source (`1` = synthetic, `0` = real)
+- `--save_cuts`: Also save the individual real/synthetic segments to `cut/`
+
+Only `numpy` is required. Processing `train1` and `train2` takes about 1 minute and needs about 12 GB of RAM.
+
+**Before:**
+
+```
+data/
+├── train1_real.npy        # [N, 4] -> [x, y, z, label]
+├── train1_synthetic.npy
+├── train2_real.npy
+├── train2_synthetic.npy
+├── val_real.npy           # val/test files are not used by this script
+├── val_synthetic.npy
+├── test_real.npy
+└── test_synthetic.npy
+```
+
+**After:**
+
+```
+data/
+├── ...                    # input files, unchanged
+├── mix/
+│   ├── train1_0.npy       # 0% real (fully synthetic)
+│   ├── train1_25.npy
+│   ├── train1_50.npy
+│   ├── train1_75.npy
+│   ├── train1_100.npy     # 100% real
+│   └── train2_{0,25,50,75,100}.npy
+└── cut/
+    ├── cut_coordinate.npy             # cut positions, one row per split
+    └── {split}_{real,synthetic}_{0-3}.npy   # only with --save_cuts
+```
+
+The mix files are `[N, 4]`, or `[N, 5]` with `-l`. The ratio in each file name is the share of the street's **area** that comes from real data, not the share of points.
+
 ### Required Data Format
 
-The data should be organized in the following structure:
+For training experiments, the data should be organized in the following structure:
 ```
 data_root/
 ├── train/
